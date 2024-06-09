@@ -1,5 +1,6 @@
 const http = require('http');
 const fs = require('fs');
+const path = require('path');
 
 const server = http.createServer((req, res) => {
     const { url } = req;
@@ -38,7 +39,39 @@ function servePage(res, page) {
     });
 }
 
+const server2 = http.createServer2((req,res) => {
+    let filePath = '.' +req.url;
+    if (filePath === './'){
+        filePath = '/views/index.html'; 
+    } else {
+        filePath = '/views${req.url}.html'
+    }
+
+    fs.readFile(filePath, (err, data) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                res.writeHead( 404, {'Content-type': 'text/plain'});
+                res.end('404 Not Found');
+                console.error(`File not found: ${filePath}`);
+            } else {
+                res.writeHead(500,{'Content-Type': 'text/plain'});
+                res.end('500 Internal Server Error');
+                console.error(`Internal Server Error ${err}`);
+            }
+        } else {
+            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.end(data);
+            console.log(`Server ${filePath}`);
+        }
+    });
+});
+
 const PORT = 3000;
 server.listen(PORT, () => {
     console.log(`Server is listening on port ${PORT}`);
+});
+
+const PORT2 = 3001;
+server2.listen(PORT, () => {
+    console.log(`Server is listening on port ${PORT2}`);
 });
