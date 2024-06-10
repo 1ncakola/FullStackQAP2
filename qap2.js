@@ -39,12 +39,12 @@ function servePage(res, page) {
     });
 }
 
-const server2 = http.createServer2((req,res) => {
-    let filePath = '.' +req.url;
-    if (filePath === './'){
-        filePath = '/views/index.html'; 
+const server2 = http.createServer((req, res) => {
+    let filePath = '.' + req.url;
+    if (filePath === './') {
+        filePath = `${__dirname}/views/index.html`;
     } else {
-        filePath = '/views${req.url}.html'
+        filePath = `${__dirname}/views${req.url}.html`;
     }
 
     fs.readFile(filePath, (err, data) => {
@@ -72,6 +72,6 @@ server.listen(PORT, () => {
 });
 
 const PORT2 = 3001;
-server2.listen(PORT, () => {
+server2.listen(PORT2, () => {
     console.log(`Server is listening on port ${PORT2}`);
 });
