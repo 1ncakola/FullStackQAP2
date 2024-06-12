@@ -3,6 +3,46 @@ const fs = require('fs');
 const path = require('path');
 const EventEmitter = require('events');
 
+const baseDir = path.join(__dirname, 'FullStackQAP2');
+
+class MyEmitter extends EventEmitter {};
+const myEmitter = new MyEmitter();
+
+myEmitter.on('status', (code) => {
+    console.log(`Status Code: ${code}`);
+});
+
+myEmitter.on('routeAccess', (route) => {
+    console.log(`Route Access: ${route}`);
+});
+
+function servePage(res, page) {
+    const filePath = path.join(baseDir, page);
+
+    fs.readFile(filePath, (err, data) => {
+        if (err) {
+            if (err.code === 'ENOENT') {
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
+                res.end('Page not found');
+                myEmitter.emit('status', 404);
+                console.error(`File not found: ${filePath}`);
+            } else {
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
+                res.end('Internal Server Error');
+                myEmitter.emit('status', 500);
+                console.error(`Internal Server Error: ${err}`);
+            }
+        } else {
+            res.writeHead(200, { 'Content-Type': 'text/html' });
+            res.end(data);
+            myEmitter.emit('status', 200);
+            console.log(`Successfully served: ${filePath}`);
+        }
+    });
+}
+
+
+
 const server = http.createServer((req, res) => {
     const { url } = req;
 
@@ -24,59 +64,35 @@ const server = http.createServer((req, res) => {
     }
 });
 
-function servePage(res, page) {
-    const filePath = `${__dirname}/FullStackQAP2/${page}`;
 
-    fs.readFile(filePath, (err, data) => {
-        if (err) {
-            res.writeHead(404, { 'Content-Type': 'text/plain' });
-            res.end('Page not found');
-            console.error(`Failed to read file: ${page}, Error: ${err}`);
-        } else {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(data);
-            console.log(`Served ${page} successfully`);
-        }
-    });
-}
 
 const server2 = http.createServer((req, res) => {
-    let filePath = '.' + req.url;
-    if (filePath === './') {
-        filePath = `${__dirname}/FullStackQAP2/index.html`;
-    } else {
-        filePath = `${__dirname}/FullStackQAP2${req.url}.html`;
+    let filePath = path.join(__dirname, 'FullStackQAP2');
+
+    // If filePath is a directory, serve index.html by default
+    if (filePath.endsWith('/')) {
+        filePath = path.join(filePath, 'index.html');
     }
 
     fs.readFile(filePath, (err, data) => {
         if (err) {
             if (err.code === 'ENOENT') {
-                res.writeHead( 404, {'Content-type': 'text/plain'});
+                res.writeHead(404, { 'Content-Type': 'text/plain' });
                 res.end('404 Not Found');
                 console.error(`File not found: ${filePath}`);
             } else {
-                res.writeHead(500,{'Content-Type': 'text/plain'});
+                res.writeHead(500, { 'Content-Type': 'text/plain' });
                 res.end('500 Internal Server Error');
                 console.error(`Internal Server Error ${err}`);
             }
         } else {
-            res.writeHead(200, {'Content-Type': 'text/html'});
+            res.writeHead(200, { 'Content-Type': 'text/html' });
             res.end(data);
             console.log(`Server ${filePath}`);
         }
     });
 });
 
-class MyEmitter extends EventEmitter {};
-const myEmitter = new MyEmitter ();
-
-myEmitter.on ('status', (code) => {
-    console.log(`Status Code: ${code}`);
-});
-
-myEmitter.on('routeAccess', (route) => {
-    console.log(`Route Access: ${route}`);
-});
 
 
 const server3 = http.createServer((req, res) => {
@@ -103,30 +119,6 @@ const server3 = http.createServer((req, res) => {
             servePage(res, 'index.html');
     }
 });
-
-function servePage(res, page) {
-    const filePath = `${__dirname}/FullStackQAP2/${page}`;
-
-    fs.readFile(filePath, (err, data) => {
-        if (err) {
-            if (err.code === 'ENOENT') {
-                res.writeHead(404, { 'Content-Type': 'text/plain' });
-                res.end('Page not found');
-                myEmitter.emit('status', 404); 
-                res.writeHead(500, { 'Content-Type': 'text/plain' });
-                res.end('Internal Server Error');
-                myEmitter.emit('status', 500); 
-            }
-        } else {
-            res.writeHead(200, { 'Content-Type': 'text/html' });
-            res.end(data);
-            myEmitter.emit('status', 200); 
-        }
-    });
-}
-
-
-
 
 
 const PORT = 3000;
